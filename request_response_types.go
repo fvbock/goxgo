@@ -3,6 +3,10 @@
 
 package goxgo
 
+import (
+	"fmt"
+)
+
 /*
 CallTarget contains the target information for the payload by naming services to
 be called and the desired version of that service
@@ -41,6 +45,10 @@ type TokenizeResponse struct {
 	Tokens []string `json:"tokens"`
 }
 
+func (s *TokenizeResponse) String() string {
+	return fmt.Sprintf("Tokens\nLanguage: %s\n%v\n", s.Locale, s.Tokens)
+}
+
 /* StemRequest - request structure
  */
 type StemRequest struct {
@@ -53,24 +61,9 @@ type StemRequest struct {
  */
 type StemResponse struct {
 	Locale string   `json:"locale"`
-	Words  []string `json:"tokens"`
+	Words  []string `json:"words"`
 }
 
-/* VsmDiffRequest - Request structure for the cosine difference function.
-
-
-*/
-type VsmDiffRequest struct {
-	Target         *CallTarget
-	Docs           []string
-	Drop_Stopwords bool
-	Stem_Words     bool
-}
-
-/* VsmDiffRequest - Response structure
- */
-type VsmDiffResponse struct {
-	Diff     float64 `json:"cosine_diff"`
-	DocLangA string  `json:doc1_detected_lang`
-	DocLangB string  `json:doc2_detected_lang`
+func (s *StemResponse) String() string {
+	return fmt.Sprintf("Stemmed Tokens\nLanguage: %s\n%v\n", s.Locale, s.Words)
 }

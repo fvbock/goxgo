@@ -11,8 +11,6 @@ from nltk.stem import PorterStemmer, LancasterStemmer, SnowballStemmer
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
-import vsm_diff
-
 from text_helpers import strip_parts
 
 def tokenize( body, locale = 'en' ):
@@ -72,8 +70,8 @@ def stem( words, locale = 'en'  ):
     elif locale == 'nl':
         s = SnowballStemmer( 'dutch' )
     elif locale == 'en':
-        # s = PorterStemmer()
-        s = LancasterStemmer()
+        s = PorterStemmer()
+        # s = LancasterStemmer()
     elif locale == 'fi':
         s = SnowballStemmer( 'finnish' )
     elif locale == 'fr':
@@ -106,27 +104,11 @@ def stem( words, locale = 'en'  ):
         except UnicodeDecodeError:
             return s.stem( word.decode( 'utf-8' ) )
 
-
-    # if isinstance( words, StringType ):
-    #     return do_stem( words )
-    # el
-
     if isinstance( words, ListType ):
-        return { 'locale': locale,
+        resp = { 'locale': locale,
                  'words': map( do_stem, words ) }
+        print resp
+        return resp
     else:
         print "nope:", type(words), words
         raise Exception( "The parameter words needs to be a list." )
-
-
-
-def vsm_compare( docs, drop_stopwords = True, stem_words = True ):
-    if not isinstance( docs, ListType ):
-        raise Exception( "You need to submit a list of documents to compare." )
-    d1 = vsm_diff.DocVector( strip_parts( docs[0] ), drop_stopwords = drop_stopwords, stem_words = stem_words )
-    d2 = vsm_diff.DocVector( strip_parts( docs[1] ), drop_stopwords = drop_stopwords, stem_words = stem_words )
-    response =  { 'doc1_detected_lang': d1.lang,
-                  'doc2_detected_lang': d2.lang,
-                  'cosine_diff': d1.compare( d2 ) }
-    print response
-    return response
