@@ -11,8 +11,6 @@ from nltk.stem import PorterStemmer, LancasterStemmer, SnowballStemmer
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
-from text_helpers import strip_parts
-
 def tokenize( body, locale = 'en' ):
     """
     tokenizes a given body. will attempt utf-8 decoding when a
@@ -27,7 +25,14 @@ def tokenize( body, locale = 'en' ):
     locale = lower( locale[0:2] )
     if locale == 'ja':
         t = tinysegmenter.TinySegmenter()
-        tokenize_function = t.tokenize
+        def wrapped(t):
+            nowstokens = []
+            tokens = t.tokenize(t)
+            for tok in tokens:
+                if not tok.isspace():
+                    nowstokens.append(tok)
+            return nowstokens
+        tokenize_function = wrapped
     else:
         tokenize_function = word_tokenize
 
@@ -70,8 +75,7 @@ def stem( words, locale = 'en'  ):
     elif locale == 'nl':
         s = SnowballStemmer( 'dutch' )
     elif locale == 'en':
-        s = PorterStemmer()
-        # s = LancasterStemmer()
+        s = SnowballStemmer( 'english' )
     elif locale == 'fi':
         s = SnowballStemmer( 'finnish' )
     elif locale == 'fr':

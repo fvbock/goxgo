@@ -6,8 +6,9 @@ package goxgo
 import (
 	"errors"
 	"fmt"
+	dbg "runtime/debug"
+
 	zmq "github.com/alecthomas/gozmq"
-	// "log"
 )
 
 /*
@@ -38,19 +39,20 @@ type Conn struct {
 Set up the connection to a goxgo service specified by the DSN
 */
 func (c *Conn) Dial(dsn *DSN) (err error) {
-	c.Context, err = zmq.NewContext()
-	if err != nil {
-		err = errors.New(fmt.Sprintf("Could not acquire ZMQ context: %+v", err.Error()))
-		return
-	}
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Printf("goXgo Dial failed: %s\r\n%v", err, string(dbg.Stack()))
+		}
+	}()
+
+	c.Context = Context
 	c.Socket, err = c.Context.NewSocket(zmq.REQ)
 	if err != nil {
-		err = errors.New(fmt.Sprintf("Could not acquire ZMQ socket: %+v", err.Error()))
-		return
+		return err
 	}
 
 	// TODO: add a conn/conf parameter to set a timeout
-	// c.Socket.SetSockOptInt(zmq.LINGER, 0)
+	c.Socket.SetSockOptInt(zmq.LINGER, 0)
 	if err == nil {
 		c.connected = true
 	}
@@ -64,7 +66,7 @@ Close the connections zmq socket and zmq context
 func (c *Conn) Close() {
 	if c.connected {
 		c.Socket.Close()
-		c.Context.Close()
+		// fmt.Println("socket closed...")
 	}
 	c.connected = false
 	return
@@ -98,12 +100,11 @@ func Call(dsn *DSN, request interface{}, response interface{}) (err error) {
 		return
 	}
 	defer c.Close()
+
 	r, err := c.Send(&request)
 	if err != nil {
-		err = errors.New(fmt.Sprintf("Shit hit the fan: %v.", err))
 		return
 	}
-
 	err = Unserialize(r, &response)
 	return
 }

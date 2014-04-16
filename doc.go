@@ -1,7 +1,7 @@
 // goXgo - Intro
 
 /*
-They basic idea for/behind goXgo is to be able to have external services
+The basic idea for/behind goXgo is to be able to have external services
 provide functionality that might not yet exist in go or would take too much
 time to implement yourself - in an RPCish manner.
 
@@ -23,10 +23,8 @@ or mathematicians specialized in scientific computing ;)
 
 To network those services i chose
 ZMQ(http://zguide.zeromq.org/page:all#-MQ-in-a-Hundred-Words).
-The python code i built some examples with already has some stubs to also
-provide an HTTP frontend. It also uses gevent (http://gevent.org/) which is a
-coroutine implementation for python using libev in the background. Data is
-exchanged in JSON right now - MsgPack might be even more effective
+
+Data is exchanged in JSON right now - MsgPack might be even more effective
 (http://msgpack.org/).
 
 The idea is to basically have a bunch of (static) functions that you want to
@@ -36,93 +34,53 @@ call from go:
 
 2. Give the service a name
 
-3. And register the service with a (or more) "networking frontend"
-
+3. And register the service with a "networking frontend"
 
 On the python side this would look somthing like this
 
  from service_frontend import ZmqFrontend
  from service import Service
- from lib.static_nltk_wrappers import tokenize, stem, vsm_compare
+ from lib.static_nltk_wrappers import tokenize, stem
 
  NLTKService = Service( name = 'NLTK' )
  NLTKService.register_service_method( f = tokenize )
  NLTKService.register_service_method( f = stem )
- NLTKService.register_service_method( f = vsm_compare )
 
  zmq_frontend = ZmqFrontend()
  zmq_frontend.register_service( NLTKService )
  zmq_frontend.start()
-
- # this is just an example - does _not_ work yet
- http_frontend = HttpFrontend()
- http_frontend.register_service( NLTKService,
- 				default_verb = HttpFrontend.HTTP_POST,
- 				method_verb_map = { HttpFrontend.HTTP_GET:[ 'tokenize', '...' ]  }, )
- http_frontend.start()
 
 
 Try it:
 
 First you need to install some stuff:
 
-You need python2.7+, pip, libev4, libev-dev
-
- [OPTIONAL] python2.7 dev-headers, cython, std buildtools [/OPTIONAL]
+You need python2.7+ including dev headers, pip, libev4, libev-dev
 
 Then you can install the needed python packages:
 
  ~/data/dev/go/src/goxgo [goxgo] $sudo pip install -r py_services/requirements.txt
 
- [OPTIONAL]
- One library in the py_services uses cython so you have to compile it. This is a bit annoying for a small test but i think the function is kind of cool/interesting.
- The following assumes your system puts header files in /usr/include/ ... (debian/ubuntu)
-
- ~/data/dev/go/src/goxgo [goxgo] $ cd py_services/lib/
- ~/data/dev/go/src/goxgo [goxgo] $ cython -a vsm_diff.pyx
- ~/data/dev/go/src/goxgo [goxgo] $ gcc -c -lpthread -O2 -Wall -fPIC -I /usr/include/python2.7/ vsm_diff.c
- ~/data/dev/go/src/goxgo [goxgo] $ gcc -shared -lpthread -O2 -Wall vsm_diff.o -o vsm_diff.so
- ~/data/dev/go/src/goxgo [goxgo] $ cd ../..
- [/OPTIONAL]
-
- If this does not work or is too tedious to do but you still wanna test comment the following line
-
- 	NLTKService.register_service_method( f = vsm_compare )
-
- from the file goxgo/py_services/test_server.py
-
- and comment everything after
-
- 	// test vsm diff
-
- in tests/goxgo_test.go (currently line 69)
-
-
 To run the python service:
 
- ~/data/dev/go/src/goxgo [goxgo] $ python py_services/test_server.py
- ('tokenize', ArgSpec(args=['body', 'locale'], varargs=None, keywords=None, defaults=('en',)))
- ('stem', ArgSpec(args=['words', 'locale'], varargs=None, keywords=None, defaults=('en',)))
- ('vsm_compare', ArgSpec(args=['docs', 'drop_stopwords', 'stem_words'], varargs=None, keywords=None, defaults=(True, True)))
- Starting server. Listening on tcp://*:4242...
+ $ python py_services/test_server.py
+ Starting server. Listening on tcp://*:4243...
  Start serving.
 
-Now the service runs and you can hit it.
+Now the service runs and you can hit it from go.
 
- ~/data/dev/go/src/goxgo [goxgo] $ go test -v tests/goxgo_test.go
- === RUN TestGoXGo
- --- PASS: TestGoXGo (0.60 seconds)
- goxgo_test.go:36: {Locale:en Tokens:[Give me a tokenized version of this unoptimzed body of text pls. Once successfully done we will try to stem the words too. Testing trying embodiment embodied]}
- goxgo_test.go:46: {Locale:en Words:[giv me a tok vert of thi unoptimz body of text pls. ont success don we wil try to stem the word too. test try embody embody]}
- goxgo_test.go:14: result: [Give me a tokenized version of this unoptimzed body of text pls. Once successfully done we will try to stem the words too. Testing trying embodiment embodied]
- goxgo_test.go:14: result: [Give me a tokenized version of this unoptimzed body of text pls. Once successfully done we will try to stem the words too. Testing trying embodiment embodied]
- goxgo_test.go:14: result: [Give me a tokenized version of this unoptimzed body of text pls. Once successfully done we will try to stem the words too. Testing trying embodiment embodied]
- goxgo_test.go:98: Compare cats and dogs:
- {Diff:0.16651983559131622 DocLangA: DocLangB:}
- goxgo_test.go:127: Compare cats and engines:
- {Diff:0.020799094811081886 DocLangA: DocLangB:}
- PASS
- ok      command-line-arguments  0.611s
+ $ go test -v tests/goxgo_test.go
+ === RUN TestGoXGoTokenize
+ --- PASS: TestGoXGoTokenize (0.00 seconds)
+         goxgo_test.go:34: tokenizeResponse:
+                 Language: en
+                 Tokens: [Give me a tokenized version of this body of text. Testing trying embodiment embodied]
+
+ === RUN TestGoXGoStem
+ --- PASS: TestGoXGoStem (0.00 seconds)
+         goxgo_test.go:47: stemResponse:
+                 Language: en
+                 Stemmed Tokens: [give me a token version of this bodi of text. test tri embodi embodi]
 
 
 Service/Function/Argument Naming/Mapping/Case convention
@@ -143,15 +101,17 @@ The arguments for that function in python are:
 BUT in go my payload keys starts with uppercase letters:
 
  tokenizePayload := gxg.TokenizeRequest {
- 	Target: &gxg.CallTarget { Services: []string{"NLTK/tokenize"}, Version: "0.1" },
- 	Body: "Give me a tokenized version of this unoptimzed body of text pls. Once successfully done we will try to stem the words too. Testing trying embodiment embodied",
+ 	Target: &gxg.CallTarget {
+		Services: []string{"NLTK/tokenize"},
+		Version: "0.1" },
+ 	Body: "Give me a tokenized version of this body of text.",
  	Locale: "en",
  }
 
-To keep case cannonical in both languages the python frontend lower-cases every
-parameter it finds. Unserialization from the JSON response does not need
-something like that because I can rely on encoding/json/Unmarshal to find the
-struct definition...
+To keep case cannonical in both languages (in stuff exported in go...) the python
+frontend lower-cases every parameter it finds. Unserialization from the JSON response
+does not need something like that because I can rely on encoding/json/Unmarshal
+to check the struct definition.
 
 */
 package goxgo

@@ -1,6 +1,3 @@
-// Request and Response structures for - in this first case - python services
-// providing NLP/scientific math functions
-
 package goxgo
 
 import (
@@ -30,6 +27,8 @@ type CallTarget struct {
 	Version  string
 }
 
+// here go the custom types. a request and response type for each exported function
+
 /* TokenizeRequest - request structure
  */
 type TokenizeRequest struct {
@@ -45,8 +44,8 @@ type TokenizeResponse struct {
 	Tokens []string `json:"tokens"`
 }
 
-func (s *TokenizeResponse) String() string {
-	return fmt.Sprintf("Tokens\nLanguage: %s\n%v\n", s.Locale, s.Tokens)
+func (s TokenizeResponse) String() string {
+	return fmt.Sprintf("Language: %s\nTokens: %v\n", s.Locale, s.Tokens)
 }
 
 /* StemRequest - request structure
@@ -64,6 +63,6 @@ type StemResponse struct {
 	Words  []string `json:"words"`
 }
 
-func (s *StemResponse) String() string {
-	return fmt.Sprintf("Stemmed Tokens\nLanguage: %s\n%v\n", s.Locale, s.Words)
+func (s StemResponse) String() string {
+	return fmt.Sprintf("Language: %s\nStemmed Tokens: %v\n", s.Locale, s.Words)
 }
