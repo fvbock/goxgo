@@ -2,18 +2,16 @@ package goxgo
 
 import (
 	"testing"
-
-	gxg "github.com/fvbock/goxgo"
 )
 
 var (
-	dsn              gxg.DSN
-	tokenizeResponse gxg.TokenizeResponse
-	stemResponse     gxg.StemResponse
+	dsn              DSN
+	tokenizeResponse TokenizeResponse
+	stemResponse     StemResponse
 )
 
 func init() {
-	dsn = gxg.DSN{
+	dsn = DSN{
 		Protocol: "tcp",
 		Host:     "localhost",
 		Port:     4563,
@@ -22,27 +20,27 @@ func init() {
 }
 
 func TestGoXGoTokenize(t *testing.T) {
-	tokenizePayload := gxg.TokenizeRequest{
-		Target: &gxg.CallTarget{
+	tokenizePayload := TokenizeRequest{
+		Target: &CallTarget{
 			Services: []string{"NLTK/tokenize"},
 			Version:  "0.1"},
 		Body:   "Give me a tokenized version of this body of text. Testing trying embodiment embodied",
 		Locale: "en",
 	}
 
-	gxg.Call(&dsn, &tokenizePayload, &tokenizeResponse)
+	Call(&dsn, &tokenizePayload, &tokenizeResponse)
 	t.Logf("tokenizeResponse:\n%v\n", tokenizeResponse)
 }
 
 func TestGoXGoStem(t *testing.T) {
-	stemPayload := gxg.StemRequest{
-		Target: &gxg.CallTarget{
+	stemPayload := StemRequest{
+		Target: &CallTarget{
 			Services: []string{"NLTK/stem"},
 			Version:  "0.1"},
 		Words:  tokenizeResponse.Tokens,
 		Locale: tokenizeResponse.Locale,
 	}
 
-	gxg.Call(&dsn, &stemPayload, &stemResponse)
+	Call(&dsn, &stemPayload, &stemResponse)
 	t.Logf("stemResponse:\n%v\n", stemResponse)
 }
