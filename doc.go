@@ -1,21 +1,14 @@
 // goXgo - Intro
 
 /*
-The basic idea for/behind goXgo is to be able to have external services
-provide functionality that might not yet exist in go or would take too much
-time to implement yourself - in an RPCish manner.
+Export non golang functionality in an RPCish manner over ZMQ.
 
 These services could be written in any other language and be running on
 the same machine as the go code or be somewhere else.
 
 The first idea for this came up when we talked about Natural Language
 Processing (NLP) for which there are a couple of nice libraries - most
-notably the NLTK (http://www.nltk.org).
-
-Another thing we will need when dealing with NLP (/Pattern Matching/
-Information Retreival/etc.) will be a solid scientific mathematics library:
-I found some starts in go but nothing compared to numPy (http://www.numpy.org/).
-R (http://www.r-project.org/) would come to mind too.
+notably the NLTK (http://www.nltk.org) which is written in Python.
 
 To start playing and testing NLP and statistical features i think it makes
 a lot of sense to use stuff that's out there (and was written by linguists
@@ -38,14 +31,21 @@ call from go:
 
 On the python side this would look somthing like this
 
+ # stuff we need
  from service_frontend import ZmqFrontend
  from service import Service
+
+ # the stuff we want to export
  from lib.static_nltk_wrappers import tokenize, stem
 
+ # a named service
  NLTKService = Service( name = 'NLTK' )
+
+ # register some functions
  NLTKService.register_service_method( f = tokenize )
  NLTKService.register_service_method( f = stem )
 
+ # add a frontend and start it
  zmq_frontend = ZmqFrontend()
  zmq_frontend.register_service( NLTKService )
  zmq_frontend.start()
@@ -69,7 +69,7 @@ To run the python service:
 
 Now the service runs and you can hit it from go.
 
- $ go test -v tests/goxgo_test.go
+ $ go test -v
  === RUN TestGoXGoTokenize
  --- PASS: TestGoXGoTokenize (0.00 seconds)
          goxgo_test.go:34: tokenizeResponse:
@@ -92,7 +92,7 @@ In python i registered a function tokenize:
 
 In go i need to call it with this target:
 
- gxg.CallTarget { Services: []string{"NLTK/tokenize"}, Version: "0.1" }
+ CallTarget { Services: []string{"NLTK/tokenize"}, Version: "0.1" }
 
 The arguments for that function in python are:
 
@@ -100,8 +100,8 @@ The arguments for that function in python are:
 
 BUT in go my payload keys starts with uppercase letters:
 
- tokenizePayload := gxg.TokenizeRequest {
- 	Target: &gxg.CallTarget {
+ tokenizePayload := TokenizeRequest {
+ 	Target: &CallTarget {
 		Services: []string{"NLTK/tokenize"},
 		Version: "0.1" },
  	Body: "Give me a tokenized version of this body of text.",
